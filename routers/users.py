@@ -81,3 +81,4 @@ def get_profile(user_id: str):
         }
     except Exception as e:
         return {"status": "failed", "error": str(e)}
+    
