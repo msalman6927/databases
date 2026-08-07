@@ -19,3 +19,4 @@ class CommentCreate(BaseModel):
 
 class FriendRequest(BaseModel):
     receiver_id: str
+    

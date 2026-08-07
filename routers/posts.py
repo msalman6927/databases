@@ -35,7 +35,7 @@ def create_post(user_id: str, post: PostCreate):
 @router.get("/all")
 def get_all_posts():
     try:
-        posts = posts_col.find().sort("created_at", -1)  # newest pehle
+        posts = posts_col.find().sort("created_at", -1)
         list_posts = []
         for post in posts:
             list_posts.append({

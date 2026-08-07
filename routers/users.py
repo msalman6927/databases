@@ -18,7 +18,7 @@ def register(user: UserRegister):
         result = users_col.insert_one({
             "name": user.name,
             "email": user.email,
-            "password": hashed.decode("utf-8"),  # string form mein save
+            "password": hashed.decode("utf-8"), 
             "bio": user.bio,
             "created_at": str(datetime.now())
         })
@@ -39,7 +39,6 @@ def login(user: UserLogin):
         if not found:
             return {"status": "failed", "error": "User not found"}
 
-        # Naya tarika verify karne ka
         password_match = bcrypt.checkpw(
             user.password.encode("utf-8"),
             found["password"].encode("utf-8")
@@ -59,8 +58,6 @@ def login(user: UserLogin):
         }
     except Exception as e:
         return {"status": "failed", "error": str(e)}
-
-
 @router.get("/profile/{user_id}")
 def get_profile(user_id: str):
     try:

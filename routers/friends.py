@@ -9,7 +9,6 @@ router = APIRouter()
 @router.post("/send/{sender_id}")
 def send_request(sender_id: str, req: FriendRequest):
     try:
-        # Already request hai?
         existing = friends_col.find_one({
             "sender_id": sender_id,
             "receiver_id": req.receiver_id
@@ -17,38 +16,47 @@ def send_request(sender_id: str, req: FriendRequest):
         if existing:
             return {"status": "failed", "error": "Request already sent"}
 
-        friends_col.insert_one({
+        result = friends_col.insert_one({   # ← result mein save kiya
             "sender_id": sender_id,
             "receiver_id": req.receiver_id,
             "status": "pending",
             "created_at": str(datetime.now())
         })
 
-        return {"status": "success", "message": "Friend request sent","request_id":friends_col.inserted_id}
+        return {
+            "status": "success",
+            "message": "Friend request sent",
+            "request_id": str(result.inserted_id)  # ← result se nikali
+        }
     except Exception as e:
         return {"status": "failed", "error": str(e)}
 
 
 @router.put("/respond/{request_id}")
-def respond_request(request_id: str, action: str):
-    # action = "accepted" ya "rejected"
+def respond_request(request_id: str, action: str, receiver_id: str):
     try:
+        request = friends_col.find_one({"_id": ObjectId(request_id)})
+
+        if not request:
+            return {"status": "failed", "error": "Request not found"}
+
+        if receiver_id != request.get("receiver_id"):
+            return {"status": "failed", "error": "Tum respond nahi kar sakte"}
+
         result = friends_col.update_one(
             {"_id": ObjectId(request_id)},
             {"$set": {"status": action}}
         )
+
         if result.modified_count == 0:
             return {"status": "failed", "error": "Request not found"}
 
         return {"status": "success", "message": f"Request {action}"}
     except Exception as e:
         return {"status": "failed", "error": str(e)}
-
-
 @router.get("/list/{user_id}")
 def get_friends(user_id: str):
     try:
-        # Woh requests jahan status accepted hai
         friend_docs = friends_col.find({
             "$or": [
                 {"sender_id": user_id, "status": "accepted"},
@@ -58,7 +66,6 @@ def get_friends(user_id: str):
 
         friends = []
         for doc in friend_docs:
-            # Doosra wala user kaun hai?
             other_id = doc["receiver_id"] if doc["sender_id"] == user_id else doc["sender_id"]
             other_user = users_col.find_one({"_id": ObjectId(other_id)})
             if other_user:
